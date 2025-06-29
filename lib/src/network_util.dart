@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'src/utils/polyline_decoder.dart';
-import 'src/utils/polyline_request.dart';
+import '../src/utils/polyline_decoder.dart';
+import '../src/utils/polyline_request.dart';
 import 'package:http/http.dart' as http;
 
 import 'utils/polyline_result.dart';
@@ -62,7 +62,7 @@ class NetworkUtil {
     }
     return results;
   }
-   Future<List<PolylineResult>> getRouteBetweenCoordinates({Add commentMore actions
+   Future<List<PolylineResult>> getRouteBetweenCoordinates({
     required PolylineRequest request,
     required String googleApiKey,
   }) async {
