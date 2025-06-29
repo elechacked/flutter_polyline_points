@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter_polyline_points/src/utils/polyline_decoder.dart';
-import 'package:flutter_polyline_points/src/utils/polyline_request.dart';
+import 'src/utils/polyline_decoder.dart';
+import 'src/utils/polyline_request.dart';
 import 'package:http/http.dart' as http;
 
 import 'utils/polyline_result.dart';
@@ -11,7 +11,7 @@ class NetworkUtil {
 
   ///Get the encoded string from google directions api
   ///
-  Future<List<PolylineResult>> getRouteBetweenCoordinates({
+  Future<List<PolylineResult>> getRouteBetweenCoordinatesOld({
     required PolylineRequest request,
     String? googleApiKey,
   }) async {
@@ -62,4 +62,81 @@ class NetworkUtil {
     }
     return results;
   }
+   Future<List<PolylineResult>> getRouteBetweenCoordinates({Add commentMore actions
+    required PolylineRequest request,
+    required String googleApiKey,
+  }) async {
+    List<PolylineResult> results = [];
+    final Uri url = Uri.parse("https://routes.googleapis.com/directions/v2:computeRoutes");
+
+    // Construct request body
+    final Map<String, dynamic> requestBody = {
+      "origin": {
+        "location": {
+          "latLng": {"latitude": request.origin.latitude, "longitude": request.origin.longitude}
+        }
+      },
+      "destination": {
+        "location": {
+          "latLng": {"latitude": request.destination.latitude, "longitude": request.destination.longitude}
+        }
+      },
+      "travelMode": "DRIVE",// Example: "DRIVE"
+    };
+
+    print("🔹 API Request: ${jsonEncode(requestBody)}");
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": googleApiKey,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline",
+      },
+      body: jsonEncode(requestBody),
+    );
+
+    print("🔹 API Response Code: ${response.statusCode}");
+    print("🔹 API Response: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final parsedJson = json.decode(response.body);
+
+      if (parsedJson["routes"] != null && parsedJson["routes"].isNotEmpty) {
+        for (var route in parsedJson["routes"]) {
+          results.add(PolylineResult(
+            points: PolylineDecoder.run(route["polyline"]["encodedPolyline"]),
+            errorMessage: "",
+            status: STATUS_OK,
+            totalDistanceValue: route["distanceMeters"],
+            distanceTexts: [route["distanceMeters"].toString() + " meters"],
+            distanceValues: [route["distanceMeters"]],
+            overviewPolyline: route["polyline"]["encodedPolyline"],
+            totalDurationValue: _parseDuration(route["duration"]),
+            durationTexts: [_formatDuration(route["duration"])],
+            durationValues: [_parseDuration(route["duration"])],
+            startAddress: "Start Location", // No direct address in API response
+            endAddress: "End Location",
+          ));
+        }
+      }
+    } else {
+      throw Exception("Failed to fetch routes: ${response.body}");
+    }
+
+    return results;
+  }
+
+  /// Converts Google API duration format "1094s" to an integer (seconds)
+  int _parseDuration(String duration) {
+    return int.parse(duration.replaceAll("s", ""));
+  }
+
+  /// Formats duration into a human-readable format (e.g., "18 min")
+  String _formatDuration(String duration) {
+    int seconds = _parseDuration(duration);
+    int minutes = (seconds / 60).round();
+    return "$minutes min";
+  }
+
 }

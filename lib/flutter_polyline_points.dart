@@ -1,8 +1,8 @@
 library flutter_polyline_points;
 
-import 'package:flutter_polyline_points/src/utils/polyline_decoder.dart';
-import 'package:flutter_polyline_points/src/utils/polyline_request.dart';
-import 'package:flutter_polyline_points/src/utils/polyline_result.dart';
+import 'src/utils/polyline_decoder.dart';
+import 'src/utils/polyline_request.dart';
+import 'src/utils/polyline_result.dart';
 
 import 'src/network_util.dart';
 import 'src/point_lat_lng.dart';
@@ -28,7 +28,7 @@ class PolylinePoints {
         "Google API Key cannot be empty if proxy isn't provided");
     try {
       var result = await NetworkUtil().getRouteBetweenCoordinates(
-          request: request, googleApiKey: googleApiKey);
+          request: request, googleApiKey: googleApiKey.toString());
       return result.isNotEmpty
           ? result[0]
           : PolylineResult(errorMessage: "No result found");
@@ -50,7 +50,7 @@ class PolylinePoints {
     assert(request.arrivalTime == null || request.departureTime == null,
         "You can only specify either arrival time or departure time");
     try {
-      return await NetworkUtil().getRouteBetweenCoordinates(request: request, googleApiKey: googleApiKey);
+      return await NetworkUtil().getRouteBetweenCoordinates(request: request, googleApiKey: googleApiKey.toString());
     } catch (e) {
       rethrow;
     }
